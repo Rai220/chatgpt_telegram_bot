@@ -75,7 +75,7 @@ class ChatGPT:
             try:
                 if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
-                    r_gen = await openai.ChatCompletion.acreate(
+                    r_gen = await openai.chat.completions.acreate(
                         model=self.model,
                         messages=messages,
                         stream=True,
@@ -92,7 +92,7 @@ class ChatGPT:
                             yield "not_finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
                 elif self.model == "text-davinci-003":
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
-                    r_gen = await openai.Completion.acreate(
+                    r_gen = await openai.completions.acreate(
                         engine=self.model,
                         prompt=prompt,
                         stream=True,
@@ -108,7 +108,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
 
-            except openai.error.InvalidRequestError as e:  # too many tokens
+            except openai.BadRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise e
 
@@ -193,16 +193,21 @@ class ChatGPT:
 
 
 async def transcribe_audio(audio_file) -> str:
-    r = await openai.Audio.atranscribe("whisper-1", audio_file)
+    r = await openai.audio.atranscribe("whisper-1", audio_file)
     return r["text"] or ""
 
 
+async def speech(text) -> str:
+    r = await openai.audio.speech.create(text)
+    return r.content
+
+
 async def generate_images(prompt, n_images=4, size="512x512"):
-    r = await openai.Image.acreate(prompt=prompt, n=n_images, size=size)
+    r = await openai.images.acreate(prompt=prompt, n=n_images, size=size)
     image_urls = [item.url for item in r.data]
     return image_urls
 
 
 async def is_content_acceptable(prompt):
-    r = await openai.Moderation.acreate(input=prompt)
+    r = await openai.moderations.acreate(input=prompt)
     return not all(r.results[0].categories.values())
