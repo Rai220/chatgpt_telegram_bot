@@ -35,7 +35,7 @@ class ChatGPT:
             try:
                 if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
-                    r = await openai.chat.completions.create(
+                    r = await openai.ChatCompletion.acreate(
                         model=self.model,
                         messages=messages,
                         **OPENAI_COMPLETION_OPTIONS
@@ -43,7 +43,7 @@ class ChatGPT:
                     answer = r.choices[0].message["content"]
                 elif self.model == "text-davinci-003":
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
-                    r = await openai.completions.create(
+                    r = await openai.Completion.acreate(
                         engine=self.model,
                         prompt=prompt,
                         **OPENAI_COMPLETION_OPTIONS
@@ -54,7 +54,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
                 n_input_tokens, n_output_tokens = r.usage.prompt_tokens, r.usage.completion_tokens
-            except Exception as e:  # too many tokens
+            except openai.error.InvalidRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise ValueError("Dialog messages is reduced to zero, but still has too many tokens to make completion") from e
 
@@ -75,7 +75,7 @@ class ChatGPT:
             try:
                 if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
-                    r_gen = await openai.chat.completions.create(
+                    r_gen = await openai.ChatCompletion.acreate(
                         model=self.model,
                         messages=messages,
                         stream=True,
@@ -92,7 +92,7 @@ class ChatGPT:
                             yield "not_finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
                 elif self.model == "text-davinci-003":
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
-                    r_gen = await openai.completions.create(
+                    r_gen = await openai.Completion.acreate(
                         engine=self.model,
                         prompt=prompt,
                         stream=True,
@@ -108,7 +108,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
 
-            except openai.BadRequestError as e:  # too many tokens
+            except openai.error.InvalidRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise e
 
@@ -193,16 +193,16 @@ class ChatGPT:
 
 
 async def transcribe_audio(audio_file) -> str:
-    r = await openai.audio.transcriptions.create("whisper-1", audio_file)
+    r = await openai.Audio.atranscribe("whisper-1", audio_file)
     return r["text"] or ""
 
 
 async def generate_images(prompt, n_images=4, size="512x512"):
-    r = await openai.images.create_variation(prompt=prompt, n=n_images, size=size)
+    r = await openai.Image.acreate(prompt=prompt, n=n_images, size=size)
     image_urls = [item.url for item in r.data]
     return image_urls
 
 
 async def is_content_acceptable(prompt):
-    r = await openai.moderations.acreate(input=prompt)
+    r = await openai.Moderation.acreate(input=prompt)
     return not all(r.results[0].categories.values())
