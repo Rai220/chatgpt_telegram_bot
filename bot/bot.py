@@ -294,7 +294,7 @@ async def _vision_message_handle_fn(
 
         # update user data
         if buf is not None:
-            base_image = base64.b64encode(buf.getvalue()).decode("utf-8")
+            base_image = base64.b64encode(buf.getvalue())
             new_dialog_message = {"user": [
                         {
                             "type": "text",
@@ -302,7 +302,7 @@ async def _vision_message_handle_fn(
                         },
                         {
                             "type": "image_url",
-                            "image_url": f"data:image/jpeg;base64,{base_image}",
+                            "image_url": base_image
                         }
                     ]
                 , "bot": answer, "date": datetime.now()}
