@@ -301,8 +301,8 @@ async def _vision_message_handle_fn(
                             "text": message,
                         },
                         {
-                            "type": "image",
-                            "image": base_image,
+                            "type": "image_url",
+                            "image_url": f"data:image/jpeg;base64,{base_image}",
                         }
                     ]
                 , "bot": answer, "date": datetime.now()}
