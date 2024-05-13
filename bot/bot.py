@@ -185,9 +185,9 @@ async def _vision_message_handle_fn(
     user_id = update.message.from_user.id
     current_model = db.get_user_attribute(user_id, "current_model")
 
-    if current_model != "gpt-4-turbo":
+    if current_model != "gpt-4o":
         await update.message.reply_text(
-            "🥲 Images processing is only available for <b>gpt-4-turbo</b> model. Please change your settings in /settings",
+            "🥲 Images processing is only available for <b>gpt-4o</b> model. Please change your settings in /settings",
             parse_mode=ParseMode.HTML,
         )
         return
@@ -228,7 +228,7 @@ async def _vision_message_handle_fn(
             config.chat_modes[chat_mode]["parse_mode"]
         ]
 
-        chatgpt_instance = openai_utils.ChatGPT(model=current_model)
+        chatgpt_instance = openai_utils.ChatGPT(model="gpt-4o")
         if config.enable_message_streaming:
             gen = chatgpt_instance.send_vision_message_stream(
                 message,
@@ -390,7 +390,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
                 "markdown": ParseMode.MARKDOWN
             }[config.chat_modes[chat_mode]["parse_mode"]]
 
-            chatgpt_instance = openai_utils.ChatGPT(model=current_model)
+            chatgpt_instance = openai_utils.ChatGPT(model="gpt-4o")
             if config.enable_message_streaming:
                 gen = chatgpt_instance.send_message_stream(_message, dialog_messages=dialog_messages, chat_mode=chat_mode)
             else:
@@ -459,11 +459,11 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async with user_semaphores[user_id]:
-        if current_model == "gpt-4-turbo" or update.message.photo is not None and len(update.message.photo) > 0:
-            logger.error('gpt-4-turbo')
-            if current_model != "gpt-4-turbo":
-                current_model = "gpt-4-turbo"
-                db.set_user_attribute(user_id, "current_model", "gpt-4-turbo")
+        if current_model != "gpt-4o" or update.message.photo is not None and len(update.message.photo) > 0:
+            logger.error('gpt-4o')
+            if current_model != "gpt-4o":
+                current_model = "gpt-4o"
+                db.set_user_attribute(user_id, "current_model", "gpt-4o")
             task = asyncio.create_task(
                 _vision_message_handle_fn(update, context, use_new_dialog_timeout=use_new_dialog_timeout)
             )
