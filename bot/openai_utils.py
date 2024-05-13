@@ -269,8 +269,8 @@ class ChatGPT:
                             "text": message,
                         },
                         {
-                            "type": "image",
-                            "image": self._encode_image(image_buffer),
+                            "type": "image_url",
+                            "image_url": f"data:image/jpeg;base64,{self._encode_image(image_buffer)}",
                         }
                     ]
                 }
